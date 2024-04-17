@@ -3,6 +3,7 @@ import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:shopping_list/data/categories.dart';
 import 'package:shopping_list/models/category.dart';
+import 'package:shopping_list/models/grocery_item.dart';
 
 class NewItem extends StatefulWidget {
   const NewItem({super.key});
@@ -15,9 +16,21 @@ class NewItem extends StatefulWidget {
 
 class _NewItemState extends State<NewItem> {
   final _formKey = GlobalKey<FormState>();
+  var _enteredName = '';
+  var _enteredQuantity = 1;
+  var _selectedCategory = categories[Categories.vegetables]!;
 
   void _saveItem() {
-    _formKey.currentState!.validate();
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      Navigator.of(context).pop(GroceryItem(
+        id: DateTime.now().toString(),
+        name: _enteredName,
+        quantity: _enteredQuantity,
+        category: _selectedCategory,
+      ),
+      );
+    }
   }
 
   @override
@@ -44,7 +57,13 @@ class _NewItemState extends State<NewItem> {
                       value.trim().length > 50) {
                     return 'Item name must be between 1 and 50 characters';
                   }
-                  return 'NULL';
+                  return null;
+                },
+                onSaved: (value) {
+                  // if (value == null) {
+                  //   return;
+                  // }
+                  _enteredName = value!;
                 },
               ),
               Row(
@@ -56,7 +75,7 @@ class _NewItemState extends State<NewItem> {
                         label: Text('Quantity'),
                       ),
                       keyboardType: TextInputType.number,
-                      initialValue: '1',
+                      initialValue: _enteredQuantity.toString(),
                       validator: (value) {
                         if (value == null ||
                             value.isEmpty ||
@@ -64,29 +83,39 @@ class _NewItemState extends State<NewItem> {
                             int.tryParse(value)! <= 0) {
                           return 'Must be a valid, positive number';
                         }
-                        return 'NULL';
+                        return null;
+                      },
+                      onSaved: (value) {
+                        _enteredQuantity = int.parse(value!);
                       },
                     ),
                   ),
                   const SizedBox(width: 8.5),
                   Expanded(
-                    child: DropdownButtonFormField(items: [
-                      for (final category in categories.entries)
-                        DropdownMenuItem(
-                          value: category.value,
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 16,
-                                height: 20,
-                                color: category.value.color,
+                    child: DropdownButtonFormField(
+                        value: _selectedCategory,
+                        items: [
+                          for (final category in categories.entries)
+                            DropdownMenuItem(
+                              value: category.value,
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 16,
+                                    height: 20,
+                                    color: category.value.color,
+                                  ),
+                                  const SizedBox(width: 6.5),
+                                  Text(category.value.title),
+                                ],
                               ),
-                              const SizedBox(width: 6.5),
-                              Text(category.value.title),
-                            ],
-                          ),
-                        )
-                    ], onChanged: (value) {}),
+                            )
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedCategory = value!;
+                          });
+                        }),
                   ),
                 ],
               ),
